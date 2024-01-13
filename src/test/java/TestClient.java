@@ -12,6 +12,5 @@ public class TestClient {
 
     public static void main(String[] args) throws IOException {
         NioClient nioClient = new NioClient(new InetSocketAddress(InetAddress.getLoopbackAddress(), 20000), new StreamConnectionImpl(), 3900);
-
     }
 }

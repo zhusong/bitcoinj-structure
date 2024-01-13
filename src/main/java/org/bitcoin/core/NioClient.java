@@ -5,6 +5,7 @@ import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
+import com.sun.javafx.binding.StringFormatter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,11 +28,12 @@ public class NioClient implements MessageWriteTarget {
         Futures.addCallback(manager.openConnection(serverAddress, handler), new FutureCallback<SocketAddress>() {
             @Override
             public void onSuccess(SocketAddress result) {
+                System.out.println(StringFormatter.format("Connect to {} result" + result.toString()));
             }
 
             @Override
             public void onFailure(Throwable t) {
-                log.error("Connect to {} failed: {}", serverAddress, Throwables.getRootCause(t));
+                System.out.println(StringFormatter.format("Connect to {} failed: {}", serverAddress, Throwables.getRootCause(t)));
             }
         }, MoreExecutors.directExecutor());
     }

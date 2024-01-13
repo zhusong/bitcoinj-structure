@@ -3,6 +3,7 @@ package org.bitcoin.core;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
+import com.sun.javafx.binding.StringFormatter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -67,7 +68,7 @@ public class NioServer extends AbstractExecutionThreadService {
                 handler.connection.connectionOpened();
             } catch (IOException e) {
                 // This can happen if ConnectionHandler's call to get a new handler returned null
-                log.error("Error handling new connection", Throwables.getRootCause(e).getMessage());
+                System.out.println(StringFormatter.format("Error handling new connection", Throwables.getRootCause(e).getMessage()));
                 newKey.channel().close();
             }
         } else { // Got a closing channel or a channel to a client connection
@@ -91,7 +92,8 @@ public class NioServer extends AbstractExecutionThreadService {
                 }
             }
         } catch (Exception e) {
-            log.error("Error trying to open/read from connection: {}", e);
+            e.printStackTrace();
+            System.out.println(StringFormatter.format("Error trying to open/read from connection: {}", e));
         } finally {
             // Go through and close everything, without letting IOExceptions get in our way
             for (SelectionKey key : selector.keys()) {
@@ -99,7 +101,7 @@ public class NioServer extends AbstractExecutionThreadService {
                     //close所有的channel
                     key.channel().close();
                 } catch (IOException e) {
-                    log.error("Error closing channel", e);
+                    System.out.println(StringFormatter.format("Error closing channel", e));
                 }
                 try {
                     //当我们关闭一个 Channel 时，Selector 会在下一次的选择操作中注意到该 Channel 已经关闭，
@@ -109,18 +111,18 @@ public class NioServer extends AbstractExecutionThreadService {
                     key.cancel();
                     handleKey(selector, key);
                 } catch (IOException e) {
-                    log.error("Error closing selection key", e);
+                    System.out.println(StringFormatter.format("Error closing selection key", e));
                 }
             }
             try {
                 selector.close(); // 关闭 Selector
             } catch (IOException e) {
-                log.error("Error closing server selector", e);
+                System.out.println(StringFormatter.format("Error closing server selector", e));
             }
             try {
                 sc.close();// 关闭 ServerSocketChannel
             } catch (IOException e) {
-                log.error("Error closing server channel", e);
+                System.out.println(StringFormatter.format("Error closing server channel", e));
             }
         }
     }

@@ -1,0 +1,1 @@
+这是关于bitcoinj项目的结构梳理的github repo，内部包含抽丝剥茧的将实现bitcoinj的0.16版本全部内容。

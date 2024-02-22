@@ -7,10 +7,20 @@ import org.bitcoin.core.StreamConnectionFactory;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class TestClient {
 
     public static void main(String[] args) throws IOException {
-        NioClient nioClient = new NioClient(new InetSocketAddress(InetAddress.getLoopbackAddress(), 20000), new StreamConnectionImpl(), 3900);
+        NioClient nioClient = new NioClient(new InetSocketAddress(InetAddress.getLoopbackAddress(), 20000),
+                new StreamConnectionImpl(), 3900);
+
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        nioClient.writeBytes(new byte[]{3, 4});
     }
 }

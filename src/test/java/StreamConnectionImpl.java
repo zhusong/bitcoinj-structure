@@ -1,3 +1,4 @@
+import com.sun.org.apache.xerces.internal.impl.dv.util.HexBin;
 import org.bitcoin.core.MessageWriteTarget;
 import org.bitcoin.core.StreamConnection;
 
@@ -17,8 +18,11 @@ public class StreamConnectionImpl implements StreamConnection {
 
     @Override
     public int receiveBytes(ByteBuffer buff) throws Exception {
-        System.out.println("receiveBytes called, buff size " + buff.array().length);
-        return 0;
+        while (buff.hasRemaining()) {
+            byte b = buff.get(); // 读取一个字节
+            System.out.println(b);
+        }
+        return buff.position();
     }
 
     @Override

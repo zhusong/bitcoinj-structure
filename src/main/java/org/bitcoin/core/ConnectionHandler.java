@@ -58,20 +58,22 @@ public class ConnectionHandler implements MessageWriteTarget {
         }
     }
 
-    public ConnectionHandler(StreamConnection streamConnection, SelectionKey key) {
+    //NioServer、NioClientManager用，工厂创建的streamConnection，里面对于建立链接、关闭链接、读数据的回调
+    public ConnectionHandler(StreamConnection connection, SelectionKey key) {
         this.key = key;
         this.channel = checkNotNull(((SocketChannel)key.channel()));
         if (connection == null) {
             readBuff = null;
             return;
         }
-        this.connection = streamConnection;
+        this.connection = connection;
+        //分配内存空间，直接内存
         readBuff = ByteBuffer.allocateDirect(Math.min(Math.max(connection.getMaxMessageSize(), BUFFER_SIZE_LOWER_BOUND), BUFFER_SIZE_UPPER_BOUND));
         connection.setWriteTarget(this); // May callback into us (eg closeConnection() now)
         connectedHandlers = null;
     }
 
-
+    //NioClientManager用
     public ConnectionHandler(StreamConnection connection, SelectionKey key, Set<ConnectionHandler> connectedHandlers) {
         this(checkNotNull(connection), key);
 
@@ -88,6 +90,7 @@ public class ConnectionHandler implements MessageWriteTarget {
         }
     }
 
+    //NioServer用
     public ConnectionHandler(StreamConnectionFactory connectionFactory, SelectionKey key) throws IOException {
         this(connectionFactory.getNewConnection(((SocketChannel) key.channel()).socket().getInetAddress(), ((SocketChannel) key.channel()).socket().getPort()), key);
         if (connection == null) {
@@ -138,7 +141,30 @@ public class ConnectionHandler implements MessageWriteTarget {
 
     @Override
     public void closeConnection() {
+        checkState(!lock.isHeldByCurrentThread());
+        try {
+            //首先channel close
+            channel.close();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        //然后peer回调
+        connectionClosed();
+    }
 
+    private void connectionClosed() {
+        boolean callClosed = false;
+        lock.lock();
+        try {
+            callClosed = !closeCalled;
+            closeCalled = true;
+        } finally {
+            lock.unlock();
+        }
+        if (callClosed) {
+            checkState(connectedHandlers == null || connectedHandlers.remove(this));
+            connection.connectionClosed();
+        }
     }
 
     // Handle a SelectionKey which was selected

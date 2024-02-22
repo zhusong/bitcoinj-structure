@@ -65,6 +65,7 @@ public class NioServer extends AbstractExecutionThreadService {
                 //每建立一个链接，链接处理就通过工厂创建
                 ConnectionHandler handler = new ConnectionHandler(connectionFactory, newKey);
                 newKey.attach(handler);
+                //回调连接建立
                 handler.connection.connectionOpened();
             } catch (IOException e) {
                 // This can happen if ConnectionHandler's call to get a new handler returned null

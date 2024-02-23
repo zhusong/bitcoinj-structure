@@ -131,6 +131,11 @@ public abstract class NetworkParameters {
         }
     }
 
+    /** Default TCP port on which to connect to nodes. */
+    public int getPort() {
+        return port;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -138,7 +143,30 @@ public abstract class NetworkParameters {
         return getId().equals(((NetworkParameters)o).getId());
     }
 
-    public MessageSerializer getDefaultSerializer() {
-        return null;
+    /**
+     * Return the default serializer for this network. This is a shared serializer.
+     * @return the default serializer for this network.
+     */
+    public final MessageSerializer getDefaultSerializer() {
+        // Construct a default serializer if we don't have one
+        if (null == this.defaultSerializer) {
+            // Don't grab a lock unless we absolutely need it
+            synchronized(this) {
+                // Now we have a lock, double check there's still no serializer
+                // and create one if so.
+                if (null == this.defaultSerializer) {
+                    // As the serializers are intended to be immutable, creating
+                    // two due to a race condition should not be a problem, however
+                    // to be safe we ensure only one exists for each network.
+                    this.defaultSerializer = getSerializer(false);
+                }
+            }
+        }
+        return defaultSerializer;
     }
+
+    /**
+     * Construct and return a custom serializer.
+     */
+    public abstract BitcoinSerializer getSerializer(boolean parseRetain);
 }

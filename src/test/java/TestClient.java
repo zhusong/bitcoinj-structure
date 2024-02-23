@@ -11,12 +11,7 @@ public class TestClient {
 
     public static void main(String[] args) throws IOException {
 
-        Peer peer = new Peer(new NetworkParameters() {
-            @Override
-            public String getPaymentProtocolId() {
-                return null;
-            }
-        }, new InetSocketAddress(InetAddress.getLoopbackAddress(), 2000));
+        Peer peer = new Peer(NetworkParameters.fromID(NetworkParameters.ID_MAINNET), new InetSocketAddress(InetAddress.getLoopbackAddress(), 2000));
 
         NioClient nioClient = new NioClient(new InetSocketAddress(InetAddress.getLoopbackAddress(), 20000),
                 peer, 3900);

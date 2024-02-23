@@ -163,4 +163,31 @@ public abstract class Message {
         length = buf.length;
         return buf;
     }
+
+    /**
+     * <p>To be called before any change of internal values including any setters. This ensures any cached byte array is
+     * removed.</p>
+     * <p>Child messages of this object(e.g. Transactions belonging to a Block) will not have their internal byte caches
+     * invalidated unless they are also modified internally.</p>
+     */
+    protected void unCache() {
+        payload = null;
+        recached = false;
+    }
+
+    protected void adjustLength(int newArraySize, int adjustment) {
+        if (length == UNKNOWN_LENGTH)
+            return;
+        // Our own length is now unknown if we have an unknown length adjustment.
+        if (adjustment == UNKNOWN_LENGTH) {
+            length = UNKNOWN_LENGTH;
+            return;
+        }
+        length += adjustment;
+        // Check if we will need more bytes to encode the length prefix.
+        if (newArraySize == 1)
+            length++;  // The assumption here is we never call adjustLength with the same arraySize as before.
+        else if (newArraySize != 0)
+            length += VarInt.sizeOf(newArraySize) - VarInt.sizeOf(newArraySize - 1);
+    }
 }

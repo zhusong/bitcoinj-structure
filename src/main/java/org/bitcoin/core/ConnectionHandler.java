@@ -3,6 +3,7 @@ package org.bitcoin.core;
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
+import com.sun.javafx.binding.StringFormatter;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
@@ -59,14 +60,14 @@ public class ConnectionHandler implements MessageWriteTarget {
     }
 
     //NioServer、NioClientManager用，工厂创建的streamConnection，里面对于建立链接、关闭链接、读数据的回调
-    public ConnectionHandler(StreamConnection streamConnection, SelectionKey key) {
+    public ConnectionHandler(StreamConnection connection, SelectionKey key) {
         this.key = key;
         this.channel = checkNotNull(((SocketChannel)key.channel()));
         if (connection == null) {
             readBuff = null;
             return;
         }
-        this.connection = streamConnection;
+        this.connection = connection;
         //分配内存空间，直接内存
         readBuff = ByteBuffer.allocateDirect(Math.min(Math.max(connection.getMaxMessageSize(), BUFFER_SIZE_LOWER_BOUND), BUFFER_SIZE_UPPER_BOUND));
         connection.setWriteTarget(this); // May callback into us (eg closeConnection() now)
@@ -202,10 +203,10 @@ public class ConnectionHandler implements MessageWriteTarget {
                 // Do a socket read and invoke the connection's receiveBytes message
                 //从channel中读取数据，并写入到readBuff
                 int read = handler.channel.read(handler.readBuff);
-                if (read == 0)
+                if (read == 0) {
                     //如果返回值为0，则可能是在等待写入操作，直接返回。
                     return; // Was probably waiting on a write
-                else if (read == -1) { // Socket was closed
+                } else if (read == -1) { // Socket was closed
                     //该代码段中的key.cancel()方法用于取消与该SelectionKey关联的通道在选择器中的注册。调用此方法后，
                     // 该SelectionKey将变为无效，并将被添加到选择器的已取消键集中。在下一次选择操作期间，
                     // 该SelectionKey将从选择器的所有键集中移除。
@@ -230,11 +231,11 @@ public class ConnectionHandler implements MessageWriteTarget {
             if (key.isWritable()) {
                 handler.tryWriteBytes();
             }
-        } catch (Exception e) {
+        } catch (Exception t) {
             // This can happen eg if the channel closes while the thread is about to get killed
             // (ClosedByInterruptException), or if handler.connection.receiveBytes throws something
-            Throwable t = Throwables.getRootCause(e);
-            log.warn("Error handling SelectionKey: {} {}", t.getClass().getName(), t.getMessage() != null ? t.getMessage() : "", e);
+//            Throwable t = Throwables.getRootCause(e);
+            System.out.println(StringFormatter.format("Error handling SelectionKey: {} {}", t.getClass().getName(), t.getMessage() != null ? t.getMessage() : "", t.getMessage()));
             handler.closeConnection();
         }
     }

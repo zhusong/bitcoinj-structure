@@ -45,6 +45,7 @@ public class NioClient implements MessageWriteTarget {
 
     @Override
     public synchronized ListenableFuture writeBytes(byte[] message) throws IOException {
+        System.out.println("handler.writeTarget " + handler.writeTarget);
         return handler.writeTarget.writeBytes(message);
     }
 
@@ -87,8 +88,9 @@ public class NioClient implements MessageWriteTarget {
 
         @Override
         public synchronized void setWriteTarget(MessageWriteTarget writeTarget) {
-            if (closeOnOpen)
+            if (closeOnOpen) {
                 writeTarget.closeConnection();
+            }
             else {
                 setTimeoutEnabled(false);
                 this.writeTarget = writeTarget;

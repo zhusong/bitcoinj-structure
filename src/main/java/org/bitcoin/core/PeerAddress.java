@@ -8,6 +8,23 @@ import java.net.InetSocketAddress;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+
+/**
+ * <p>A PeerAddress holds an IP address and port number representing the network location of
+ * a peer in the Bitcoin P2P network. It exists primarily for serialization purposes.</p>
+ *
+ * <p>This class abuses the protocol version contained in its serializer. It can only contain 0 (format within
+ * {@link VersionMessage}), 1 ({@link AddressV1Message}) or 2 ({@link AddressV2Message}).</p>
+ *
+ * <p>Instances of this class are not safe for use by multiple threads.</p>
+ *
+ * 定义了一个PeerAddress类，用于表示比特币P2P网络中对等节点的网络位置，包括IP地址和端口号。它主要用于序列化目的。
+ *
+ * 该类滥用了其序列化器中包含的协议版本。它只能包含0（{@link VersionMessage}中的格式）、
+ * 1（{@link AddressV1Message}）或2（{@link AddressV2Message}）。
+ *
+ * 这个类的实例不适用于多线程环境。
+ */
 public class PeerAddress extends ChildMessage{
     private InetAddress addr;
     private String hostname; // Used for .onion addresses

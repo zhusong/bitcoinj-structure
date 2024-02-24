@@ -20,6 +20,10 @@ import java.util.concurrent.locks.Lock;
 import static com.google.common.base.Preconditions.*;
 import static com.google.common.base.Preconditions.checkArgument;
 
+/**
+ * Handles high-level message (de)serialization for peers, acting as the bridge between the
+ * {@code org.bitcoinj.net} classes and {@link Peer}.
+ */
 public abstract class PeerSocketHandler extends AbstractTimeoutHandler implements StreamConnection {
     private static final Logger log = LoggerFactory.getLogger(PeerSocketHandler.class);
 

@@ -190,4 +190,14 @@ public abstract class Message {
         else if (newArraySize != 0)
             length += VarInt.sizeOf(newArraySize) - VarInt.sizeOf(newArraySize - 1);
     }
+
+    protected long readInt64() throws ProtocolException {
+        try {
+            long u = Utils.readInt64(payload, cursor);
+            cursor += 8;
+            return u;
+        } catch (ArrayIndexOutOfBoundsException e) {
+            throw new ProtocolException(e);
+        }
+    }
 }

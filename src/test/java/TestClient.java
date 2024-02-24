@@ -1,5 +1,6 @@
 import com.sun.istack.internal.Nullable;
 import org.bitcoin.core.*;
+import org.junit.Test;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -9,7 +10,9 @@ import java.util.regex.Pattern;
 
 public class TestClient {
 
-    public static void main(String[] args) throws IOException {
+
+    @Test
+    public void testPeer() throws IOException {
 
         Peer peer = new Peer(NetworkParameters.fromID(NetworkParameters.ID_MAINNET), new InetSocketAddress(InetAddress.getLoopbackAddress(), 2000));
 
@@ -21,6 +24,12 @@ public class TestClient {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        nioClient.writeBytes(new byte[]{3, 4});
+       // nioClient.writeBytes(new byte[]{3, 4});
+
+        peer.sendMessage(this.buildMessage());
+    }
+
+    public Message buildMessage(){
+        return new Ping(100);
     }
 }

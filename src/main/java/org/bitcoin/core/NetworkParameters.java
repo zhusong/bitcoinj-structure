@@ -169,4 +169,32 @@ public abstract class NetworkParameters {
      * Construct and return a custom serializer.
      */
     public abstract BitcoinSerializer getSerializer(boolean parseRetain);
+
+    public abstract int getProtocolVersionNum(final ProtocolVersion version);
+
+    public static enum ProtocolVersion {
+        MINIMUM(70000),
+        PONG(60001),
+        BLOOM_FILTER(70000), // BIP37
+        BLOOM_FILTER_BIP111(70011), // BIP111
+        WITNESS_VERSION(70012),
+        FEEFILTER(70013), // BIP133
+        CURRENT(70013);
+
+        private final int bitcoinProtocol;
+
+        ProtocolVersion(final int bitcoinProtocol) {
+            this.bitcoinProtocol = bitcoinProtocol;
+        }
+
+        public int getBitcoinProtocolVersion() {
+            return bitcoinProtocol;
+        }
+    }
+
+    /** The header bytes that identify the start of a packet on this network. */
+    public long getPacketMagic() {
+        return packetMagic;
+    }
+
 }

@@ -19,10 +19,8 @@ public class BitcoinSerializer extends MessageSerializer{
 
     private static final Map<Class<? extends Message>, String> names = new HashMap<>();
     static {
-
         names.put(Ping.class, "ping");
         names.put(Pong.class, "pong");
-
     }
     /**
      * Constructs a BitcoinSerializer with the given behavior.

@@ -12,7 +12,34 @@ public class Peer extends PeerSocketHandler {
 
     @Override
     protected void processMessage(Message m) throws Exception {
+        // Allow event listeners to filter the message stream. Listeners are allowed to drop messages by
 
+        if (m instanceof Ping) {
+            processPing((Ping) m);
+        } else if (m instanceof Pong) {
+            processPong((Pong) m);
+        } else {
+            System.out.println("Received unhandled message:" + this + "," + m);
+        }
+    }
+
+    private void processPong(Pong m) {
+        // Iterates over a snapshot of the list, so we can run unlocked here.
+//        for (PendingPing ping : pendingPings) {
+//            if (m.getNonce() == ping.nonce) {
+//                pendingPings.remove(ping);
+//                // This line may trigger an event listener that re-runs ping().
+//                ping.complete();
+//                return;
+//            }
+//        }
+
+        System.out.println("process pong");
+    }
+
+    private void processPing(Ping m) {
+        if (m.hasNonce())
+            sendMessage(new Pong(m.getNonce()));
     }
 
     @Override

@@ -150,7 +150,7 @@ public class BitcoinSerializer extends MessageSerializer{
         out.write(header);
         out.write(message);
 
-        System.out.println(StringFormatter.format("Sending {} message: {}", name, Utils.HEX.encode(header) + Utils.HEX.encode(message)));
+        System.out.println("Sending " + name + ", message:" + Utils.HEX.encode(header) + ", " +Utils.HEX.encode(message));
     }
 
     public class BitcoinPacketHeader {

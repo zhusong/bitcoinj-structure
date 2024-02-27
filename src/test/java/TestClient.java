@@ -26,7 +26,17 @@ public class TestClient {
         }
        // nioClient.writeBytes(new byte[]{3, 4});
 
-        peer.sendMessage(this.buildMessage());
+        while (true) {
+
+            peer.sendMessage(this.buildMessage());
+            try {
+                Thread.sleep(2000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
+        //发完就直接close了，所以不太好整，是守护线程，非守护线程才行。
     }
 
     public Message buildMessage(){

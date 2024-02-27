@@ -73,7 +73,6 @@ public class NioServer extends AbstractExecutionThreadService {
             }
         } catch (Exception e) {
             e.printStackTrace();
-            System.out.println(StringFormatter.format("Error trying to open/read from connection: {}", e));
         } finally {
             // Go through and close everything, without letting IOExceptions get in our way
             for (SelectionKey key : selector.keys()) {
@@ -81,7 +80,7 @@ public class NioServer extends AbstractExecutionThreadService {
                     //close所有的channel
                     key.channel().close();
                 } catch (IOException e) {
-                    System.out.println(StringFormatter.format("Error closing channel", e));
+                    e.printStackTrace();
                 }
                 try {
                     //当我们关闭一个 Channel 时，Selector 会在下一次的选择操作中注意到该 Channel 已经关闭，
@@ -91,18 +90,18 @@ public class NioServer extends AbstractExecutionThreadService {
                     key.cancel();
                     this.handleKey(selector, key);
                 } catch (IOException e) {
-                    System.out.println(StringFormatter.format("Error closing selection key", e));
+                    e.printStackTrace();
                 }
             }
             try {
                 selector.close(); // 关闭 Selector
             } catch (IOException e) {
-                System.out.println(StringFormatter.format("Error closing server selector", e));
+                e.printStackTrace();
             }
             try {
                 sc.close();// 关闭 ServerSocketChannel
             } catch (IOException e) {
-                System.out.println(StringFormatter.format("Error closing server channel", e));
+                e.printStackTrace();
             }
         }
     }
@@ -123,7 +122,7 @@ public class NioServer extends AbstractExecutionThreadService {
                 handler.connection.connectionOpened();
             } catch (IOException e) {
                 // This can happen if ConnectionHandler's call to get a new handler returned null
-                System.out.println(StringFormatter.format("Error handling new connection", Throwables.getRootCause(e).getMessage()));
+                e.printStackTrace();
                 newKey.channel().close();
             }
         } else { // Got a closing channel or a channel to a client connection

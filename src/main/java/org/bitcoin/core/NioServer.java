@@ -54,28 +54,6 @@ public class NioServer extends AbstractExecutionThreadService {
         sc.register(selector, SelectionKey.OP_ACCEPT);
     }
 
-    // Handle a SelectionKey which was selected
-    private void handleKey(Selector selector, SelectionKey key) throws IOException {
-        if (key.isValid() && key.isAcceptable()) {
-            // Accept a new connection, give it a stream connection as an attachment
-            SocketChannel newChannel = sc.accept();
-            newChannel.configureBlocking(false);
-            SelectionKey newKey = newChannel.register(selector, SelectionKey.OP_READ);
-            try {
-                //每建立一个链接，链接处理就通过工厂创建
-                ConnectionHandler handler = new ConnectionHandler(connectionFactory, newKey);
-                newKey.attach(handler);
-                //回调连接建立
-                handler.connection.connectionOpened();
-            } catch (IOException e) {
-                // This can happen if ConnectionHandler's call to get a new handler returned null
-                System.out.println(StringFormatter.format("Error handling new connection", Throwables.getRootCause(e).getMessage()));
-                newKey.channel().close();
-            }
-        } else { // Got a closing channel or a channel to a client connection
-            ConnectionHandler.handleKey(key);
-        }
-    }
 
 
     protected void run() throws Exception {
@@ -89,7 +67,8 @@ public class NioServer extends AbstractExecutionThreadService {
                     SelectionKey key = keyIterator.next();
                     keyIterator.remove();
 
-                    handleKey(selector, key);
+                    //处理
+                    this.handleKey(selector, key);
                 }
             }
         } catch (Exception e) {
@@ -110,7 +89,7 @@ public class NioServer extends AbstractExecutionThreadService {
                     // 但是，如果我们不手动调用 key.cancel() 取消该 SelectionKey，
                     // 它仍然会留在 Selector 的键集合中，可能会导致不必要的迭代和处理。
                     key.cancel();
-                    handleKey(selector, key);
+                    this.handleKey(selector, key);
                 } catch (IOException e) {
                     System.out.println(StringFormatter.format("Error closing selection key", e));
                 }
@@ -125,6 +104,31 @@ public class NioServer extends AbstractExecutionThreadService {
             } catch (IOException e) {
                 System.out.println(StringFormatter.format("Error closing server channel", e));
             }
+        }
+    }
+
+
+    // Handle a SelectionKey which was selected
+    private void handleKey(Selector selector, SelectionKey key) throws IOException {
+        if (key.isValid() && key.isAcceptable()) {
+            // Accept a new connection, give it a stream connection as an attachment
+            SocketChannel newChannel = sc.accept();
+            newChannel.configureBlocking(false);
+            SelectionKey newKey = newChannel.register(selector, SelectionKey.OP_READ);
+            try {
+                //每建立一个链接，链接处理就通过工厂创建
+                ConnectionHandler handler = new ConnectionHandler(connectionFactory, newKey);
+                newKey.attach(handler);
+                //回调连接建立
+                handler.connection.connectionOpened();
+            } catch (IOException e) {
+                // This can happen if ConnectionHandler's call to get a new handler returned null
+                System.out.println(StringFormatter.format("Error handling new connection", Throwables.getRootCause(e).getMessage()));
+                newKey.channel().close();
+            }
+        } else { // Got a closing channel or a channel to a client connection
+            //System.out.println("server handle key else called ");
+            ConnectionHandler.handleKey(key);
         }
     }
 

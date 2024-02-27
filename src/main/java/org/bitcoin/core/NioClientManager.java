@@ -48,7 +48,7 @@ public class NioClientManager extends AbstractExecutionThreadService implements 
                         SelectionKey key = conn.sc.register(selector, SelectionKey.OP_CONNECT);
                         key.attach(conn);
                     } catch (ClosedChannelException e) {
-                        log.warn("SocketChannel was closed before it could be registered");
+                        System.out.println("SocketChannel was closed before it could be registered");
                     }
                 }
 
@@ -71,14 +71,15 @@ public class NioClientManager extends AbstractExecutionThreadService implements 
                 }
             }
         } catch (Exception e) {
-            log.warn("Error trying to open/read from connection: ", e);
+            System.out.println("Error trying to open/read from connection: " + e);
         } finally {
             // Go through and close everything, without letting IOExceptions get in our way
             for (SelectionKey key : selector.keys()) {
                 try {
+                    System.out.println("close selection key channel");
                     key.channel().close();
                 } catch (IOException e) {
-                    log.warn("Error closing channel", e);
+                    System.out.println("Error closing channel" + e);
                 }
                 key.cancel();
                 if (key.attachment() instanceof ConnectionHandler)
@@ -87,7 +88,7 @@ public class NioClientManager extends AbstractExecutionThreadService implements 
             try {
                 selector.close();
             } catch (IOException e) {
-                log.warn("Error closing client manager selector", e);
+                System.out.println("Error closing client manager selector" + e);
             }
         }
     }
@@ -122,14 +123,14 @@ public class NioClientManager extends AbstractExecutionThreadService implements 
                 //链接确实建立
                 if (sc.finishConnect()) {
                     //从SocketChannel中获取远程socket地址
-                    log.info("Connected to {}", sc.socket().getRemoteSocketAddress());
+                    System.out.println("Connected to {}" + sc.socket().getRemoteSocketAddress());
                     //感兴趣的事件中，再加上读时间，并且去掉链接事件，并且attach ConnectionHandler
                     key.interestOps((key.interestOps() | SelectionKey.OP_READ) & ~SelectionKey.OP_CONNECT).attach(handler);
                     connection.connectionOpened();
                     data.future.set(data.address);
                 } else {
                     //链接仍然没有建立
-                    log.warn("Failed to connect to {}", sc.socket().getRemoteSocketAddress());
+                    System.out.println("Failed to connect to {}" + sc.socket().getRemoteSocketAddress());
                     handler.closeConnection(); // Failed to connect for some reason
                     data.future.setException(new ConnectException("Unknown reason"));
                     data.future = null;
@@ -139,7 +140,7 @@ public class NioClientManager extends AbstractExecutionThreadService implements 
                 // may cause this. Otherwise it may be any arbitrary kind of connection failure.
                 // Calling sc.socket().getRemoteSocketAddress() here throws an exception, so we can only log the error itself
                 Throwable cause = Throwables.getRootCause(e);
-                log.warn("Failed to connect with exception: {}: {}", cause.getClass().getName(), cause.getMessage(), e);
+                System.out.println("Failed to connect with exception: {}: {}" + cause.getClass().getName()+ cause.getMessage()+ e);
                 handler.closeConnection();
                 data.future.setException(cause);
                 data.future = null;

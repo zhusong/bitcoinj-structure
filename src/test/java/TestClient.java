@@ -16,9 +16,7 @@ public class TestClient {
 
         Peer peer = new Peer(NetworkParameters.fromID(NetworkParameters.ID_MAINNET), new InetSocketAddress(InetAddress.getLoopbackAddress(), 2000));
 
-        NioClient nioClient = new NioClient(new InetSocketAddress(InetAddress.getLoopbackAddress(), 20000),
-                peer, 100000);
-
+        NioClient nioClient = new NioClient(new InetSocketAddress(InetAddress.getLoopbackAddress(), 2000), peer, 100000);
         try {
             Thread.sleep(1000);
         } catch (InterruptedException e) {

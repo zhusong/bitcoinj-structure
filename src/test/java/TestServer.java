@@ -1,7 +1,5 @@
 import com.sun.istack.internal.Nullable;
-import org.bitcoin.core.NioServer;
-import org.bitcoin.core.StreamConnection;
-import org.bitcoin.core.StreamConnectionFactory;
+import org.bitcoin.core.*;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -14,9 +12,18 @@ public class TestServer {
             @Nullable
             @Override
             public StreamConnection getNewConnection(InetAddress inetAddress, int port) {
-                return new StreamConnectionImpl();
+                return new InboundMessageQueuer(MainNetParams.get()) {
+                    @Override
+                    public void connectionClosed() {
+                    }
+
+                    @Override
+                    public void connectionOpened() {
+
+                    }
+                };
             }
-        }, new InetSocketAddress(InetAddress.getLoopbackAddress(), 20000));
+        }, new InetSocketAddress(InetAddress.getLoopbackAddress(), 2000));
 
         nioServer.startAsync();
         nioServer.awaitRunning();

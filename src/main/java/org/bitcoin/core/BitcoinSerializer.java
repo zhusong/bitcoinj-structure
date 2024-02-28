@@ -4,11 +4,15 @@ import com.sun.javafx.binding.StringFormatter;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.net.ProtocolException;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
+
+import static org.bitcoin.core.Utils.HEX;
+import static org.bitcoin.core.Utils.readUint32;
 
 public class BitcoinSerializer extends MessageSerializer{
     private static final int COMMAND_LEN = 12;
@@ -57,8 +61,25 @@ public class BitcoinSerializer extends MessageSerializer{
     }
 
     @Override
-    public Message deserialize(ByteBuffer in) throws ProtocolException, IOException, UnsupportedOperationException {
-        return null;
+    public Message deserialize(ByteBuffer in) throws ProtocolException, IOException {
+        // A Bitcoin protocol message has the following format.
+        //
+        //   - 4 byte magic number: 0xfabfb5da for the testnet or
+        //                          0xf9beb4d9 for production
+        //   - 12 byte command in ASCII
+        //   - 4 byte payload size
+        //   - 4 byte checksum
+        //   - Payload data
+        //
+        // The checksum is the first 4 bytes of a SHA256 hash of the message payload. It isn't
+        // present for all messages, notably, the first one on a connection.
+        //
+        // Bitcoin Core ignores garbage before the magic header bytes. We have to do the same because
+        // sometimes it sends us stuff that isn't part of any message.
+        seekPastMagicBytes(in);
+        BitcoinPacketHeader header = new BitcoinPacketHeader(in);
+        // Now try to read the whole message.
+        return deserializePayload(header, in);
     }
 
     @Override
@@ -68,7 +89,37 @@ public class BitcoinSerializer extends MessageSerializer{
 
     @Override
     public Message deserializePayload(BitcoinPacketHeader header, ByteBuffer in) throws ProtocolException, BufferUnderflowException, UnsupportedOperationException {
-        return null;
+        byte[] payloadBytes = new byte[header.size];
+        in.get(payloadBytes, 0, header.size);
+
+        // Verify the checksum.
+        byte[] hash;
+        hash = Sha256Hash.hashTwice(payloadBytes);
+        if (header.checksum[0] != hash[0] || header.checksum[1] != hash[1] ||
+                header.checksum[2] != hash[2] || header.checksum[3] != hash[3]) {
+
+            throw new ProtocolException("Checksum failed to verify, actual " +
+                    HEX.encode(hash) +
+                    " vs " + HEX.encode(header.checksum));
+        }
+
+        System.out.println("Received {} byte '{}' message: {}" + header.size + header.command + HEX.encode(payloadBytes));
+        try {
+            return makeMessage(header.command, header.size, payloadBytes, hash, header.checksum);
+        } catch (Exception e) {
+            throw new ProtocolException("Error deserializing message " + HEX.encode(payloadBytes) + "\n", e);
+        }
+    }
+
+    private Message makeMessage(String command, int length, byte[] payloadBytes, byte[] hash, byte[] checksum) throws ProtocolException {
+        // We use an if ladder rather than reflection because reflection is very slow on Android.
+        if (command.equals("ping")) {
+            return new Ping(params, payloadBytes);
+        } else if (command.equals("pong")) {
+            return new Pong(params, payloadBytes);
+        } else {
+            return new UnknownMessage(params, command, payloadBytes);
+        }
     }
 
     @Override
@@ -150,12 +201,64 @@ public class BitcoinSerializer extends MessageSerializer{
         out.write(header);
         out.write(message);
 
-        System.out.println("Sending " + name + ", message:" + Utils.HEX.encode(header) + ", " +Utils.HEX.encode(message));
+        System.out.println("Sending " + name + ", message:" + HEX.encode(header) + ", " + HEX.encode(message));
     }
 
-    public class BitcoinPacketHeader {
 
-        public static final int HEADER_LENGTH = 4 + 4 + 4;
-        public int size;
+    public static class BitcoinPacketHeader {
+        /** The largest number of bytes that a header can represent */
+        public static final int HEADER_LENGTH = COMMAND_LEN + 4 + 4;
+
+        public final byte[] header;
+        public final String command;
+        public final int size;
+        public final byte[] checksum;
+
+        public BitcoinPacketHeader(ByteBuffer in) throws ProtocolException, BufferUnderflowException {
+            //头大小
+            header = new byte[HEADER_LENGTH];
+            in.get(header, 0, header.length);
+
+            int cursor = 0;
+
+            // The command is a NULL terminated string, unless the command fills all twelve bytes
+            // in which case the termination is implicit.
+            for (; header[cursor] != 0 && cursor < COMMAND_LEN; cursor++) ;
+            byte[] commandBytes = new byte[cursor];
+            System.arraycopy(header, 0, commandBytes, 0, cursor);
+
+
+            command = new String(commandBytes, StandardCharsets.US_ASCII);
+            cursor = COMMAND_LEN;
+
+
+            //4字节长度
+            size = (int) readUint32(header, cursor);
+            cursor += 4;
+
+            if (size > Message.MAX_SIZE || size < 0)
+                throw new ProtocolException("Message size too large: " + size);
+
+            // Old clients don't send the checksum.
+            checksum = new byte[4];
+            // Note that the size read above includes the checksum bytes.
+            System.arraycopy(header, cursor, checksum, 0, 4);
+            cursor += 4;
+        }
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || !(o instanceof BitcoinSerializer)) return false;
+        BitcoinSerializer other = (BitcoinSerializer) o;
+        return Objects.equals(params, other.params) &&
+                protocolVersion == other.protocolVersion &&
+                parseRetain == other.parseRetain;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(params, protocolVersion, parseRetain);
     }
 }

@@ -142,6 +142,7 @@ public abstract class PeerSocketHandler extends AbstractTimeoutHandler implement
                 try {
                     message = serializer.deserialize(buff);
                 } catch (BufferUnderflowException e) {
+                    e.printStackTrace();
                     // If we went through the whole buffer without a full message, we need to use the largeReadBuffer
                     if (firstMessage && buff.limit() == buff.capacity()) {
                         // ...so reposition the buffer to 0 and read the next message header

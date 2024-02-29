@@ -37,6 +37,7 @@ public abstract class InboundMessageQueuer extends PeerSocketHandler {
 //                future.set(null);
 //                return;
 //            }
+            Thread.sleep(2000);
             super.sendMessage(new Pong(((Ping) m).getNonce() + ThreadLocalRandom.current().nextInt(300)));
         }
         if (m instanceof BloomFilter) {

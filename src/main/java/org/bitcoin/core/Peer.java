@@ -33,8 +33,13 @@ public class Peer extends PeerSocketHandler {
 //                return;
 //            }
 //        }
-
-        System.out.println("process pong nonce " + m.getNonce());
+//        System.out.println("process pong nonce " + m.getNonce());
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        sendMessage(new Ping(m.getNonce()));
     }
 
     private void processPing(Ping m) {

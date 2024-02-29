@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ThreadLocalRandom;
 
 public abstract class InboundMessageQueuer extends PeerSocketHandler {
     public final BlockingQueue<Message> inboundMessages = new ArrayBlockingQueue<>(1000);
@@ -36,8 +37,7 @@ public abstract class InboundMessageQueuer extends PeerSocketHandler {
 //                future.set(null);
 //                return;
 //            }
-
-            sendMessage(new Pong(((Ping) m).getNonce() + 1));
+            super.sendMessage(new Pong(((Ping) m).getNonce() + ThreadLocalRandom.current().nextInt(300)));
         }
         if (m instanceof BloomFilter) {
             lastReceivedFilter = (BloomFilter) m;

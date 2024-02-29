@@ -34,7 +34,7 @@ public class Peer extends PeerSocketHandler {
 //            }
 //        }
 
-        System.out.println("process pong");
+        System.out.println("process pong nonce " + m.getNonce());
     }
 
     private void processPing(Ping m) {

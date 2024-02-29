@@ -219,6 +219,12 @@ public class ConnectionHandler implements MessageWriteTarget {
                     handler.closeConnection();
                     return;
                 }
+
+                System.out.println("deserialize remaining length " + handler.readBuff.remaining());
+
+                if(!handler.readBuff.hasRemaining()){
+                    return;
+                }
                 // "flip" the buffer - setting the limit to the current position and setting position to 0
                 ((Buffer) handler.readBuff).flip();
                 // Use connection.receiveBytes's return value as a check that it stopped reading at the right location

@@ -103,7 +103,7 @@ public class BitcoinSerializer extends MessageSerializer{
                     " vs " + HEX.encode(header.checksum));
         }
 
-        System.out.println("Received {} byte '{}' message: {}" + header.size + header.command + HEX.encode(payloadBytes));
+        System.out.println("Received {} byte '{}' message: {}" + header.size + "  " + header.command + "  " + HEX.encode(payloadBytes));
         try {
             return makeMessage(header.command, header.size, payloadBytes, hash, header.checksum);
         } catch (Exception e) {
@@ -164,7 +164,24 @@ public class BitcoinSerializer extends MessageSerializer{
 
     @Override
     public void seekPastMagicBytes(ByteBuffer in) throws BufferUnderflowException {
-
+        int magicCursor = 3;  // Which byte of the magic we're looking for currently.
+        while (in.hasRemaining()) {
+            byte b = in.get();
+            // We're looking for a run of bytes that is the same as the packet magic but we want to ignore partial
+            // magics that aren't complete. So we keep track of where we're up to with magicCursor.
+            byte expectedByte = (byte)(0xFF & params.getPacketMagic() >>> (magicCursor * 8));
+            if (b == expectedByte) {
+                magicCursor--;
+                if (magicCursor < 0) {
+                    // We found the magic sequence.
+                    return;
+                } else {
+                    // We still have further to go to find the next message.
+                }
+            } else {
+                magicCursor = 3;
+            }
+        }
     }
 
     /**
@@ -185,23 +202,24 @@ public class BitcoinSerializer extends MessageSerializer{
     @Override
     public void serialize(String name, byte[] message, OutputStream out) throws IOException {
         //数据头：4（magic） + 12（command） + 4（payload length） + 4（checksum）
-        byte[] header = new byte[4 + COMMAND_LEN + 4 + 4 /* checksum */];
-        Utils.uint32ToByteArrayBE(params.getPacketMagic(), header, 0);
+        byte[] header = new byte[4 + COMMAND_LEN + 4 + 4 /* checksum */]; //24
+        Utils.uint32ToByteArrayBE(params.getPacketMagic(), header, 0); //写入4个字节魔法数
 
         // The header array is initialized to zero by Java so we don't have to worry about
         // NULL terminating the string here.
         for (int i = 0; i < name.length() && i < COMMAND_LEN; i++) {
-            header[4 + i] = (byte) (name.codePointAt(i) & 0xFF);
+            header[4 + i] = (byte) (name.codePointAt(i) & 0xFF); //将操作命令写入，最多12个字节
         }
 
-        Utils.uint32ToByteArrayLE(message.length, header, 4 + COMMAND_LEN);
+        Utils.uint32ToByteArrayLE(message.length, header, 4 + COMMAND_LEN); //16的位置，写下消息的长度
 
-        byte[] hash = Sha256Hash.hashTwice(message);
-        System.arraycopy(hash, 0, header, 4 + COMMAND_LEN + 4, 4);
+        byte[] hash = Sha256Hash.hashTwice(message); //将消息哈希两次
+        System.arraycopy(hash, 0, header, 4 + COMMAND_LEN + 4, 4); //写入
         out.write(header);
         out.write(message);
 
         System.out.println("Sending " + name + ", message:" + HEX.encode(header) + ", " + HEX.encode(message));
+        System.out.println("Sending whole msg: " + HEX.encode(header) + HEX.encode(message));
     }
 
 
@@ -217,6 +235,7 @@ public class BitcoinSerializer extends MessageSerializer{
         public BitcoinPacketHeader(ByteBuffer in) throws ProtocolException, BufferUnderflowException {
             //头大小
             header = new byte[HEADER_LENGTH];
+            System.out.println("deserialize BitcoinPacketHeader header length " + header.length + ", remaining length " + in.remaining());
             in.get(header, 0, header.length);
 
             int cursor = 0;
@@ -227,10 +246,8 @@ public class BitcoinSerializer extends MessageSerializer{
             byte[] commandBytes = new byte[cursor];
             System.arraycopy(header, 0, commandBytes, 0, cursor);
 
-
             command = new String(commandBytes, StandardCharsets.US_ASCII);
             cursor = COMMAND_LEN;
-
 
             //4字节长度
             size = (int) readUint32(header, cursor);

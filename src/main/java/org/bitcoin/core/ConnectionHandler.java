@@ -203,6 +203,7 @@ public class ConnectionHandler implements MessageWriteTarget {
                 // Do a socket read and invoke the connection's receiveBytes message
                 //从channel中读取数据，并写入到readBuff
                 int read = handler.channel.read(handler.readBuff);
+                System.out.println("key.isReadable() " + read);
                 if (read == 0) {
                     //如果返回值为0，则可能是在等待写入操作，直接返回。
                     return; // Was probably waiting on a write
@@ -220,13 +221,9 @@ public class ConnectionHandler implements MessageWriteTarget {
                     return;
                 }
 
-                System.out.println("deserialize remaining length " + handler.readBuff.remaining());
-
-                if(!handler.readBuff.hasRemaining()){
-                    return;
-                }
                 // "flip" the buffer - setting the limit to the current position and setting position to 0
                 ((Buffer) handler.readBuff).flip();
+                System.out.println("after flip readBuff, remaining bytes length : " + handler.readBuff.remaining());
                 // Use connection.receiveBytes's return value as a check that it stopped reading at the right location
                 int bytesConsumed = checkNotNull(handler.connection).receiveBytes(handler.readBuff);
                 checkState(handler.readBuff.position() == bytesConsumed);

@@ -25,6 +25,9 @@ public class BitcoinSerializer extends MessageSerializer{
     static {
         names.put(Ping.class, "ping");
         names.put(Pong.class, "pong");
+        names.put(AddressV1Message.class, "addr");
+        names.put(AddressV2Message.class, "addrv2");
+
     }
     /**
      * Constructs a BitcoinSerializer with the given behavior.
@@ -107,7 +110,8 @@ public class BitcoinSerializer extends MessageSerializer{
         try {
             return makeMessage(header.command, header.size, payloadBytes, hash, header.checksum);
         } catch (Exception e) {
-            throw new ProtocolException("Error deserializing message " + HEX.encode(payloadBytes) + "\n", e);
+            System.out.println("Error deserializing message " + HEX.encode(payloadBytes) + "\n" + e);
+            throw new ProtocolException("deserializePayload error");
         }
     }
 
@@ -117,6 +121,12 @@ public class BitcoinSerializer extends MessageSerializer{
             return new Ping(params, payloadBytes);
         } else if (command.equals("pong")) {
             return new Pong(params, payloadBytes);
+        } else if (command.equals("sendaddrv2")) {
+            return new SendAddrV2Message(params);
+        } else if (command.equals("addr")) {
+            return makeAddressV1Message(payloadBytes, length);
+        } else if (command.equals("addrv2")) {
+            return makeAddressV2Message(payloadBytes, length);
         } else {
             return new UnknownMessage(params, command, payloadBytes);
         }
@@ -124,17 +134,17 @@ public class BitcoinSerializer extends MessageSerializer{
 
     @Override
     public boolean isParseRetainMode() {
-        return false;
+        return true;
     }
 
     @Override
     public AddressV1Message makeAddressV1Message(byte[] payloadBytes, int length) throws ProtocolException, UnsupportedOperationException {
-        return null;
+        return new AddressV1Message(params, payloadBytes, this, length);
     }
 
     @Override
     public AddressV2Message makeAddressV2Message(byte[] payloadBytes, int length) throws ProtocolException, UnsupportedOperationException {
-        return null;
+        return new AddressV2Message(params, payloadBytes, this, length);
     }
 
     @Override

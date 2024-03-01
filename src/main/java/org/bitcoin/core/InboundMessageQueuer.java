@@ -31,15 +31,19 @@ public abstract class InboundMessageQueuer extends PeerSocketHandler {
 
     @Override
     protected void processMessage(Message m) throws Exception {
+        Thread.sleep(2000);
         if (m instanceof Ping) {
 //            SettableFuture<Void> future = mapPingFutures.get(((Ping) m).getNonce());
 //            if (future != null) {
 //                future.set(null);
 //                return;
 //            }
-            Thread.sleep(2000);
             super.sendMessage(new Pong(((Ping) m).getNonce() + ThreadLocalRandom.current().nextInt(300)));
         }
+        if(m instanceof AddressV1Message){
+            super.sendMessage(new Pong(ThreadLocalRandom.current().nextInt(300)));
+        }
+
         if (m instanceof BloomFilter) {
             lastReceivedFilter = (BloomFilter) m;
         }

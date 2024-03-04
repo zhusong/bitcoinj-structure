@@ -23,8 +23,10 @@ public class BitcoinSerializer extends MessageSerializer{
 
     private static final Map<Class<? extends Message>, String> names = new HashMap<>();
     static {
+        names.put(VersionMessage.class, "version");
         names.put(Ping.class, "ping");
         names.put(Pong.class, "pong");
+        names.put(SendAddrV2Message.class, "sendaddrv2");
         names.put(AddressV1Message.class, "addr");
         names.put(AddressV2Message.class, "addrv2");
 
@@ -87,7 +89,7 @@ public class BitcoinSerializer extends MessageSerializer{
 
     @Override
     public BitcoinPacketHeader deserializeHeader(ByteBuffer in) throws ProtocolException, IOException, UnsupportedOperationException {
-        return null;
+        return new BitcoinPacketHeader(in);
     }
 
     @Override

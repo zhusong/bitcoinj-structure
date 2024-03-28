@@ -167,6 +167,8 @@ public class ConnectionHandler implements MessageWriteTarget {
         }
     }
 
+
+
     // Handle a SelectionKey which was selected
     // Runs unlocked as the caller is single-threaded (or if not, should enforce that handleKey is only called
     // atomically for a given ConnectionHandler)
@@ -239,7 +241,7 @@ public class ConnectionHandler implements MessageWriteTarget {
         }
     }
 
-    private void tryWriteBytes() throws IOException  {
+    void tryWriteBytes() throws IOException  {
         lock.lock();
         try {
             // Iterate through the outbound ByteBuff queue, pushing as much as possible into the OS' network buffer.
@@ -265,5 +267,13 @@ public class ConnectionHandler implements MessageWriteTarget {
         } finally {
             lock.unlock();
         }
+    }
+
+    public SocketChannel getChannel() {
+        return channel;
+    }
+
+    public ByteBuffer getReadBuff() {
+        return readBuff;
     }
 }

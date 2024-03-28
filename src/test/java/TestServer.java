@@ -14,7 +14,7 @@ public class TestServer {
             @Nullable
             @Override
             public StreamConnection getNewConnection(InetAddress inetAddress, int port) {
-                return new StreamConnectionImpl();
+                return new StreamConnectionImpl(inetAddress, port);
             }
         }, new InetSocketAddress(InetAddress.getLoopbackAddress(), 20000));
 

@@ -2,9 +2,15 @@ import com.sun.org.apache.xerces.internal.impl.dv.util.HexBin;
 import org.bitcoin.core.MessageWriteTarget;
 import org.bitcoin.core.StreamConnection;
 
+import java.net.InetAddress;
 import java.nio.ByteBuffer;
 
 public class StreamConnectionImpl implements StreamConnection {
+
+    public StreamConnectionImpl(InetAddress inetAddress, int port) {
+    }
+
+    public StreamConnectionImpl(){}
 
     @Override
     public void connectionClosed() {
